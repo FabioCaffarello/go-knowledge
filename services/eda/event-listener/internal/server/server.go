@@ -2,37 +2,40 @@ package server
 
 import (
 	"go-knowledge/libs/golang/resources/go-rabbitmq/queue"
-
-	amqp "github.com/rabbitmq/amqp091-go"
+    "go-knowledge/services/eda/event-listener/internal/application/usecase"
 )
 
 type Server struct {
-	quitCh         chan struct{}
-	msgCh          chan amqp.Delivery
+	quitCh         chan string
 	rabbitMQ       *queue.RabbitMQ
 	eventsNotifier *queue.RabbitMQNotifier
 	consumers      []Consumer
-	eventsConsumer *queue.RabbitMQConsumer
 }
 
 func NewServer(rmq *queue.RabbitMQ, notifier *queue.RabbitMQNotifier) *Server {
 	return &Server{
 		rabbitMQ:       rmq,
 		eventsNotifier: notifier,
-		quitCh:         make(chan struct{}),
-		msgCh:          make(chan amqp.Delivery, 128),
+		quitCh:         make(chan string),
 	}
 }
 
-func (s *Server) RegisterConsumer(consumerName, exchangeName, queueName, routingKey string) {
+func (s *Server) RegisterConsumer(consumerName, exchangeName, queueName, routingKey string, usecaseImpl usecase.UsecaseInterface) {
 	rmqConsumer := queue.NewRabbitMQConsumer(s.rabbitMQ.Channel, queueName, consumerName, exchangeName, routingKey, false, nil)
-	consumer := NewConsumer(queueName, routingKey, rmqConsumer)
+	consumer := NewConsumer(queueName, routingKey, rmqConsumer, s.quitCh, usecaseImpl)
 	s.consumers = append(s.consumers, *consumer)
 }
 
 func (s *Server) Start() {
 	for _, consumer := range s.consumers {
-		go consumer.consumeRabbitMQ()
+		go consumer.Listen()
 	}
-	s.loop()
+// mainloop:
+// 	for {
+// 		select {
+// 		case <-s.quitCh:
+// 			// remove consumer
+// 			// break mainloop
+// 		}
+// 	}
 }
