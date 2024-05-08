@@ -17,9 +17,9 @@ services:
       timeout: 5s
       retries: 2
     networks:
-      - go-knoeledge-networks
+      - go-knowledge-networks
 
 networks:
-  go-knoeledge-networks:
-    name: go-knoeledge-network
+  go-knowledge-networks:
+    name: go-knowledge-network
     driver: bridge
