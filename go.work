@@ -1,3 +1,7 @@
 go 1.22
 
-use ./services/eda/event-listener
+use (
+	./libs/golang/resources/go-rabbitmq
+	./playground
+	./services/eda/event-listener
+)
