@@ -13,10 +13,10 @@ type RabbitMQConsumer struct {
 	AutoAck      bool
 	Args         amqp.Table
 	ExchangeName string
-	BindingKey   string
+	RoutingKey   string
 }
 
-func NewRabbitMQConsumer(channel *amqp.Channel, queueName, consumerName, exchangeName, bindingKey string, autoAck bool, args amqp.Table) *RabbitMQConsumer {
+func NewRabbitMQConsumer(channel *amqp.Channel, queueName, consumerName, exchangeName, routingKey string, autoAck bool, args amqp.Table) *RabbitMQConsumer {
 	return &RabbitMQConsumer{
 		Channel:      channel,
 		QueueName:    queueName,
@@ -24,7 +24,7 @@ func NewRabbitMQConsumer(channel *amqp.Channel, queueName, consumerName, exchang
 		AutoAck:      autoAck,
 		Args:         args,
 		ExchangeName: exchangeName,
-		BindingKey:   bindingKey,
+		RoutingKey:   routingKey,
 	}
 }
 
@@ -40,7 +40,7 @@ func (r *RabbitMQConsumer) Consume(messageChannel chan amqp.Delivery) {
 	failOnError(err, "failed to declare a queue")
 	err = r.Channel.QueueBind(
 		q.Name,         // queue name
-		r.BindingKey,   // routing key
+		r.RoutingKey,   // routing key
 		r.ExchangeName, // exchange name
 		false,          // no-wait
 		nil,            // arguments

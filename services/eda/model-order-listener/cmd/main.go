@@ -4,7 +4,11 @@ import (
 	inMemoryDBClient "go-knowledge/libs/golang/resources/database/in-memory/go-doc-db-client/client"
 	inMemoryDB "go-knowledge/libs/golang/resources/database/in-memory/go-doc-db/database"
 	"go-knowledge/libs/golang/resources/go-rabbitmq/queue"
-	inMemoryDBRepository "go-knowledge/services/eda/event-listener/internal/infra/database/in-memory"
+	inMemoryDBRepository "go-knowledge/services/eda/model-order-listener/internal/infra/database/in-memory"
+	amqpConsumer "go-knowledge/services/eda/model-order-listener/internal/consumer/amqp"
+	controllerListener "go-knowledge/services/eda/model-order-listener/internal/controller/listener"
+    eventServer "go-knowledge/services/eda/model-order-listener/internal/infra/server/event"
+	"go-knowledge/services/eda/model-order-listener/internal/usecase"
 	"log"
 )
 
@@ -14,7 +18,7 @@ var (
 	exchangeType             = "direct"
 	queueName                = "service-feedback"
 	routingKey               = "services.events"
-	routingKeyEOS            = "services.events.eos"
+	// routingKeyEOS            = "services.events.eos"
 	dbName                   = "event-messages"
 	modelOrderCollectionName = "model-orders"
 	rabbitmqUser             = "guest"
@@ -45,7 +49,15 @@ func main() {
 		log.Fatalf("Error setting up exchange: %v", err)
 	}
 
-    notifier := queue.NewRabbitMQNotifier(rmq.Channel, rmq.ExchangeName)
+	// notifier := queue.NewRabbitMQNotifier(rmq.Channel, rmq.ExchangeName)
 
-    
+	modelOrderUsecase := usecase.NewCreateModelOrderUseCase(modelOrderRepository)
+
+	listenerController := controllerListener.NewListenerController()
+	modelOrderConsumer := amqpConsumer.NewAmqpConsumer(rmq, queueName, consumerName, routingKey)
+
+	listenerController.AddListener(modelOrderConsumer, modelOrderUsecase)
+
+    listenerServer := eventServer.NewListenerServer(listenerController)
+    listenerServer.Start()
 }
