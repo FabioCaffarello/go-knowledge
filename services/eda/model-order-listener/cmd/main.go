@@ -4,20 +4,23 @@ import (
 	inMemoryDBClient "go-knowledge/libs/golang/resources/database/in-memory/go-doc-db-client/client"
 	inMemoryDB "go-knowledge/libs/golang/resources/database/in-memory/go-doc-db/database"
 	"go-knowledge/libs/golang/resources/go-rabbitmq/queue"
-	inMemoryDBRepository "go-knowledge/services/eda/model-order-listener/internal/infra/database/in-memory"
+	"go-knowledge/libs/golang/services/shared/go-events/events"
 	amqpConsumer "go-knowledge/services/eda/model-order-listener/internal/consumer/amqp"
 	controllerListener "go-knowledge/services/eda/model-order-listener/internal/controller/listener"
-    eventServer "go-knowledge/services/eda/model-order-listener/internal/infra/server/event"
+	inMemoryDBRepository "go-knowledge/services/eda/model-order-listener/internal/infra/database/in-memory"
+	"go-knowledge/services/eda/model-order-listener/internal/infra/event"
+	eventHandler "go-knowledge/services/eda/model-order-listener/internal/infra/event/handler"
+	eventServer "go-knowledge/services/eda/model-order-listener/internal/infra/server/event"
 	"go-knowledge/services/eda/model-order-listener/internal/usecase"
 	"log"
 )
 
 var (
-	consumerName             = "event-listener"
-	exchangeName             = "services-events"
-	exchangeType             = "direct"
-	queueName                = "service-feedback"
-	routingKey               = "services.events"
+	consumerName = "event-listener"
+	exchangeName = "services-events"
+	exchangeType = "direct"
+	queueName    = "service-feedback"
+	routingKey   = "services.events"
 	// routingKeyEOS            = "services.events.eos"
 	dbName                   = "event-messages"
 	modelOrderCollectionName = "model-orders"
@@ -49,15 +52,25 @@ func main() {
 		log.Fatalf("Error setting up exchange: %v", err)
 	}
 
-	// notifier := queue.NewRabbitMQNotifier(rmq.Channel, rmq.ExchangeName)
+	notifier := queue.NewRabbitMQNotifier(rmq.Channel, rmq.ExchangeName)
+	eventDispatcher := events.NewEventDispatcher()
+	eventDispatcher.Register("ErrorCreated", &eventHandler.ErrorCreatedHandler{
+		Notifier: notifier,
+	})
 
-	modelOrderUsecase := usecase.NewCreateModelOrderUseCase(modelOrderRepository)
+	errorEventHandler := event.NewErrorCreated()
+
+	modelOrderUsecase := usecase.NewCreateModelOrderUseCase(
+		modelOrderRepository,
+		errorEventHandler,
+		eventDispatcher,
+	)
 
 	listenerController := controllerListener.NewListenerController()
 	modelOrderConsumer := amqpConsumer.NewAmqpConsumer(rmq, queueName, consumerName, routingKey)
 
 	listenerController.AddListener(modelOrderConsumer, modelOrderUsecase)
 
-    listenerServer := eventServer.NewListenerServer(listenerController)
-    listenerServer.Start()
+	listenerServer := eventServer.NewListenerServer(listenerController)
+	listenerServer.Start()
 }

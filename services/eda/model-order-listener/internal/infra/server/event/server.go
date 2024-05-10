@@ -2,10 +2,12 @@ package eventserver
 
 import (
 	controllerListener "go-knowledge/services/eda/model-order-listener/internal/controller/listener"
+	"log"
 )
 
 type ListenerServer struct {
 	controller *controllerListener.ListenerController
+	quitCh     chan struct{}
 }
 
 func NewListenerServer(
@@ -13,6 +15,7 @@ func NewListenerServer(
 ) *ListenerServer {
 	return &ListenerServer{
 		controller: controller,
+		quitCh:     make(chan struct{}),
 	}
 }
 
@@ -23,7 +26,8 @@ func (es *ListenerServer) Start() {
 mainloop:
 	for {
 		select {
-		case <-es.controller.GetQuitCh():
+		case <-es.quitCh:
+			log.Println("Shutting down listener server")
 			break mainloop
 		}
 	}
