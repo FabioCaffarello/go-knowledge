@@ -31,21 +31,32 @@ func NewAmqpConsumer(rmq *queue.RabbitMQ, queueName, consumerName, routingKey st
 }
 
 func (al *AmqpConsumer) GetListenerTag() string {
-    return fmt.Sprintf("%s:%s:%s", al.rabbitMQConsumer.ConsumerName, al.rabbitMQConsumer.QueueName, al.rabbitMQConsumer.RoutingKey)
+	return fmt.Sprintf("%s:%s:%s", al.rabbitMQConsumer.ConsumerName, al.rabbitMQConsumer.QueueName, al.rabbitMQConsumer.RoutingKey)
 }
 
 func (al *AmqpConsumer) Consume() {
 	messageChannel := make(chan amqp.Delivery)
 	go al.rabbitMQConsumer.Consume(messageChannel)
+	// mainloop:
+	// for {
+	//     select {
+	//         case msg, ok := <-messageChannel:
+	//             if !ok {
+	//                 log.Println("Stopping consumer...")
+	//                 break mainloop
+	//             }
+	//             al.msgCh <- msg.Body
+	//     }
+	// }
 	for msg := range messageChannel {
 		al.msgCh <- msg.Body
 	}
 }
 
-func (al *AmqpConsumer) GetMsgCh() <-chan []byte{
-    return al.msgCh
+func (al *AmqpConsumer) GetMsgCh() <-chan []byte {
+	return al.msgCh
 }
 
 // func (al *AmqpConsumer) Stop() {
-    
+
 // }

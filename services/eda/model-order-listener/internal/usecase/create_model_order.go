@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"go-knowledge/services/eda/model-order-listener/internal/entity"
 	repository "go-knowledge/services/eda/model-order-listener/internal/infra/database"
+	"go-knowledge/services/eda/model-order-listener/internal/types"
 	inputDTO "go-knowledge/services/eda/model-order-listener/internal/usecase/dtos/input"
 	"log"
 )
@@ -20,7 +21,7 @@ func NewCreateModelOrderUseCase(
 	}
 }
 
-func (u *CreateModelOrderUseCase) ProcessMessageChannel(msgCh <-chan []byte, quitCh chan struct{}) {
+func (u *CreateModelOrderUseCase) ProcessMessageChannel(msgCh <-chan []byte, errCh chan types.ErrMsg) {
 	for msg := range msgCh {
 		var msgDTO inputDTO.ModelOrderDTO
 		err := json.Unmarshal(msg, &msgDTO)
@@ -30,7 +31,7 @@ func (u *CreateModelOrderUseCase) ProcessMessageChannel(msgCh <-chan []byte, qui
 		}
 		log.Printf("Message received: %v", msgDTO)
 		err = u.execute(msgDTO)
-        
+
         if err != nil {
             log.Printf("Error processing message: %v", err)
         }
@@ -43,7 +44,7 @@ func (u *CreateModelOrderUseCase) execute(msg inputDTO.ModelOrderDTO) error {
         msg.Context,
         ConvertSubcontextsDTOToEntity(msg.Subcontexts),
         msg.BucketName,
-        ConvertFilesReferencesDTOToEntity(msg.FilesReferences),	
+        ConvertFilesReferencesDTOToEntity(msg.FilesReferences),
         msg.Partition,
     )
     if err != nil {
@@ -56,5 +57,5 @@ func (u *CreateModelOrderUseCase) execute(msg inputDTO.ModelOrderDTO) error {
         return err
     }
 
-    return nil   
+    return nil
 }

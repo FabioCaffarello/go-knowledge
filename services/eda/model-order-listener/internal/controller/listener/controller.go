@@ -3,6 +3,7 @@ package listenercontroller
 import (
 	"go-knowledge/services/eda/model-order-listener/internal/consumer"
 	"go-knowledge/services/eda/model-order-listener/internal/usecase"
+    "go-knowledge/services/eda/model-order-listener/internal/types"
 	"sync"
 
 	"errors"
@@ -15,13 +16,13 @@ type Listener struct {
 
 type ListenerController struct {
 	listeners map[string]*Listener
-	quitCh   chan struct{}
+	errCh   chan types.ErrMsg
 	mu        sync.RWMutex
 }
 
 func NewListenerController() *ListenerController {
 	return &ListenerController{
-        quitCh:  make(chan struct{}),
+        errCh:  make(chan types.ErrMsg),
     }
 }
 
@@ -66,8 +67,8 @@ func (c *ListenerController) GetListeners() map[string]*Listener {
 	return c.listeners
 }
 
-func (c *ListenerController) GetQuitCh() chan struct{} {
-    return c.quitCh
+func (c *ListenerController) GetErrCh() chan types.ErrMsg {
+    return c.errCh
 }
 
 func (c *ListenerController) StartListener(listenerTag string) error {
@@ -79,7 +80,7 @@ func (c *ListenerController) StartListener(listenerTag string) error {
 	}
 	go func(listener *Listener) {
 		listener.consumer.Consume()
-		listener.UsecaseImpl.ProcessMessageChannel(listener.consumer.GetMsgCh(), c.quitCh)
+		listener.UsecaseImpl.ProcessMessageChannel(listener.consumer.GetMsgCh(), c.errCh)
         // Need to handle the error
 	}(listener)
 	return nil
