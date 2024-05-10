@@ -9,6 +9,6 @@ type ModelOrderDTO struct {
 	Context         string                       `json:"context"`
 	Subcontexts     []sharedDTO.SubcontextDTO    `json:"subcontexts"`
 	BucketName      string                       `json:"bucket_name"`
-	FilesReferences []sharedDTO.FileReferenceDTO `json:"files_references"`
+	Files []sharedDTO.FileDTO `json:"files"`
 	Partition       string                       `json:"partition"`
 }

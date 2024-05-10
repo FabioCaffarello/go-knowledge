@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"encoding/json"
+	"fmt"
 	"go-knowledge/libs/golang/services/shared/go-events/events"
 	"go-knowledge/services/eda/model-order-listener/internal/entity"
 	repository "go-knowledge/services/eda/model-order-listener/internal/infra/database"
@@ -13,17 +14,20 @@ import (
 type CreateModelOrderUseCase struct {
 	modelOrderRepository repository.ModelOrderRepositoryInterface
 	ErrorCreated         events.EventInterface
+    FileOrderCreated     events.EventInterface
 	EventDispatcher      events.EventDispatcherInterface
 }
 
 func NewCreateModelOrderUseCase(
 	modelOrderRepository repository.ModelOrderRepositoryInterface,
 	errorCreated events.EventInterface,
+    fileOrderCreated     events.EventInterface,
 	eventDispatcher events.EventDispatcherInterface,
 ) *CreateModelOrderUseCase {
 	return &CreateModelOrderUseCase{
 		modelOrderRepository: modelOrderRepository,
 		ErrorCreated:         errorCreated,
+        FileOrderCreated:     fileOrderCreated,
 		EventDispatcher:      eventDispatcher,
 	}
 }
@@ -59,12 +63,13 @@ func (u *CreateModelOrderUseCase) ProcessMessageChannel(msgCh <-chan []byte, lis
 }
 
 func (u *CreateModelOrderUseCase) execute(msg inputDTO.ModelOrderDTO) error {
+    files := GetFilesNameFromDTO(msg.Files)
 	modelOrder, err := entity.NewModelOrder(
 		msg.Costumer,
 		msg.Context,
 		ConvertSubcontextsDTOToEntity(msg.Subcontexts),
 		msg.BucketName,
-		ConvertFilesReferencesDTOToEntity(msg.FilesReferences),
+		files,
 		msg.Partition,
 	)
 	if err != nil {
@@ -76,6 +81,22 @@ func (u *CreateModelOrderUseCase) execute(msg inputDTO.ModelOrderDTO) error {
 		log.Printf("Error saving model order: %v", err)
 		return err
 	}
-
+    for _, fileReference := range modelOrder.FilesReferences {
+        fileOrder := outputDTO.FileOrderDTO{
+            OrderID:     string(modelOrder.ID),
+            ModelID:     string(modelOrder.ModelID),
+            FileID:      string(fileReference.FileID),
+            Costumer:    modelOrder.Costumer,
+            Context:     modelOrder.Context,
+            Subcontexts: ConvertSubcontextsEntityToDTO(modelOrder.Subcontexts),
+            BucketName:  modelOrder.BucketName,
+            Partition:   modelOrder.Partition,
+        }
+        u.FileOrderCreated.AddPayload(
+            fileOrder,
+        )
+    }
+    u.FileOrderCreated.SetTag(fmt.Sprintf("file-order-created:%s:%s", modelOrder.Costumer, modelOrder.ModelID))
+    u.EventDispatcher.Dispatch(u.FileOrderCreated)
 	return nil
 }

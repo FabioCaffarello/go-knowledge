@@ -14,8 +14,8 @@ type Subcontext struct {
 }
 
 type FileReference struct {
-	FileID string `json:"file_id",bson:"file_id"`
-	Name   string `json:"name",bson:"name"`
+	FileID md5id.ID `json:"file_id",bson:"file_id"`
+	Name   string   `json:"name",bson:"name"`
 }
 
 type ModelOrder struct {
@@ -35,18 +35,18 @@ func NewModelOrder(
 	context string,
 	subcontexts []Subcontext,
 	bucketName string,
-	filesReferences []FileReference,
+	files []string,
 	partition string,
 ) (*ModelOrder, error) {
 	modelOrder := &ModelOrder{
-		Costumer:        costumer,
-		Context:         context,
-		Subcontexts:     subcontexts,
-		BucketName:      bucketName,
-		FilesReferences: filesReferences,
-		Partition:       partition,
-		CreatedAt:       time.Now().Format(time.RFC3339),
+		Costumer:    costumer,
+		Context:     context,
+		Subcontexts: subcontexts,
+		BucketName:  bucketName,
+		Partition:   partition,
+		CreatedAt:   time.Now().Format(time.RFC3339),
 	}
+	modelOrder.setFilesReferences(files)
 	modelOrder.setModelID()
 	modelOrder.setModelOrderID()
 
@@ -117,4 +117,14 @@ func (m *ModelOrder) setModelID() {
 func (m *ModelOrder) setModelOrderID() {
 	modelOrderID := m.getModelOrderIDAsString()
 	m.ID = md5id.GetIDFromString(modelOrderID)
+}
+
+func (m *ModelOrder) setFilesReferences(files []string) {
+	for _, file := range files {
+		fileReference := FileReference{
+			FileID: md5id.GetIDFromString(file),
+			Name:   file,
+		}
+		m.FilesReferences = append(m.FilesReferences, fileReference)
+	}
 }

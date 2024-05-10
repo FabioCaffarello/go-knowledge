@@ -57,12 +57,17 @@ func main() {
 	eventDispatcher.Register("ErrorCreated", &eventHandler.ErrorCreatedHandler{
 		Notifier: notifier,
 	})
+	eventDispatcher.Register("FileOrderCreated", &eventHandler.FileOrderCreatedHandler{
+		Notifier: notifier,
+	})
 
 	errorEventHandler := event.NewErrorCreated()
+    fileOrderEventHandler := event.NewFileOrderCreated()
 
 	modelOrderUsecase := usecase.NewCreateModelOrderUseCase(
 		modelOrderRepository,
 		errorEventHandler,
+        fileOrderEventHandler,
 		eventDispatcher,
 	)
 
