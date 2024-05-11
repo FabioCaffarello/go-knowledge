@@ -33,6 +33,7 @@ func (s *Server) Start() {
 	fmt.Println("Server starting...")
 	go s.consumeRabbitMQ()
 	s.loop()
+	defer s.rabbitMQ.Close()
 }
 
 func (s *Server) consumeRabbitMQ() {
@@ -70,8 +71,6 @@ mainloop:
 			s.handleMessage(msg)
 		}
 	}
-	defer s.rabbitMQ.Close()
-	fmt.Println("Server shutting down gracefully")
 }
 
 func (s *Server) handleMessage(msg string) {

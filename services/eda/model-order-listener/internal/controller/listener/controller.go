@@ -19,7 +19,9 @@ type ListenerController struct {
 }
 
 func NewListenerController() *ListenerController {
-	return &ListenerController{}
+	return &ListenerController{
+        listeners: make(map[string]*Listener),
+    }
 }
 
 func (c *ListenerController) AddListener(consum consumer.ConsumerInterface, usecaseImpl usecase.UseCaseInterface) error {
@@ -52,7 +54,7 @@ func (c *ListenerController) GetListener(listenerTag string) (*Listener, error) 
 	defer c.mu.RUnlock()
 	listener, ok := c.listeners[listenerTag]
 	if !ok {
-		return &Listener{}, errors.New("Listener not found")
+		return nil, errors.New("Listener not found")
 	}
 	return listener, nil
 }
