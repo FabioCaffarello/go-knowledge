@@ -7,6 +7,5 @@ use (
 	./libs/golang/services/shared/go-events
 	./libs/golang/shared/id/go-md5
 	./playground
-	./services/eda/event-listener
 	./services/eda/model-order-listener
 )
