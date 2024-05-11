@@ -128,3 +128,18 @@ func (m *ModelOrder) setFilesReferences(files []string) {
 		m.FilesReferences = append(m.FilesReferences, fileReference)
 	}
 }
+
+func (m *ModelOrder) ToMap() map[string]interface{} {
+    modelOrderMap := map[string]interface{}{
+        "_id":              m.ID,
+        "model_id":         m.ModelID,
+        "costumer":         m.Costumer,
+        "context":          m.Context,
+        "subcontexts":      m.Subcontexts,
+        "bucket_name":      m.BucketName,
+        "files_references": m.FilesReferences,
+        "partition":        m.Partition,
+        "created_at":       m.CreatedAt,
+    }
+    return modelOrderMap
+}

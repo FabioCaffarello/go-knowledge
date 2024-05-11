@@ -23,10 +23,13 @@ func NewErrorCreatedHandler(
 func (h *ErrorCreatedHandler) Handle(event events.EventInterface, wg *sync.WaitGroup) {
 	defer wg.Done()
 	for _, v := range event.GetPayloads() {
-		jsonOutput, _ := json.Marshal(v)
-        err := h.Notifier.Notify(jsonOutput, event.GetTag())
-        if err != nil {
-            log.Printf("Error notifying: %v", err)
-        }
+		jsonOutput, err := json.Marshal(v)
+		if err != nil {
+			log.Printf("Error marshalling: %v", err)
+		}
+		err = h.Notifier.Notify(jsonOutput, event.GetTag())
+		if err != nil {
+			log.Printf("Error notifying: %v", err)
+		}
 	}
 }

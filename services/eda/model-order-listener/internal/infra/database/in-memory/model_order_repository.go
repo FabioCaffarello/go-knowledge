@@ -28,18 +28,7 @@ func NewModelOrderRepository(
 
 func (r *ModelOrderRepository) Create(modelOrder *entity.ModelOrder) error {
 	log.Printf("Save model order in memory")
-	modelOrderMap := map[string]interface{}{
-		"_id":              modelOrder.ID,
-		"model_id":         modelOrder.ModelID,
-		"customer":         modelOrder.Costumer,
-		"context":          modelOrder.Context,
-		"subcontexts":      modelOrder.Subcontexts,
-		"bucket_name":      modelOrder.BucketName,
-		"files_references": modelOrder.FilesReferences,
-		"partition":        modelOrder.Partition,
-		"created_at":       modelOrder.CreatedAt,
-	}
-
+	modelOrderMap := modelOrder.ToMap()
 	err := r.client.InsertOne(r.collectionName, modelOrderMap)
 	if err != nil {
 		return err
@@ -78,10 +67,10 @@ func (r *ModelOrderRepository) FindByID(id string) (*entity.ModelOrder, error) {
 }
 
 func (r *ModelOrderRepository) DeleteByID(id string) error {
-    log.Printf("Delete model order by ID in memory")
-    err := r.client.DeleteOne(r.collectionName, id)
-    if err != nil {
-        return err
-    }
-    return nil
+	log.Printf("Delete model order by ID in memory")
+	err := r.client.DeleteOne(r.collectionName, id)
+	if err != nil {
+		return err
+	}
+	return nil
 }
