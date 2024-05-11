@@ -98,5 +98,6 @@ func (u *CreateModelOrderUseCase) execute(msg inputDTO.ModelOrderDTO) error {
     }
     u.FileOrderCreated.SetTag(fmt.Sprintf("file-order-created:%s:%s", modelOrder.Costumer, modelOrder.ModelID))
     u.EventDispatcher.Dispatch(u.FileOrderCreated)
+    u.modelOrderRepository.DeleteByID(string(modelOrder.ID))
 	return nil
 }

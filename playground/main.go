@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"go-knowledge/libs/golang/resources/go-rabbitmq/queue"
 	"log"
@@ -18,16 +19,15 @@ type Server struct {
 }
 
 func NewServer(rmq *queue.RabbitMQ, notifier *queue.RabbitMQNotifier, consumer *queue.RabbitMQConsumer) *Server {
-    return &Server{
-        rabbitMQ:       rmq,
-        eventsNotifier: notifier,
-        eventsConsumer: consumer,
-        quitCh:         make(chan struct{}),
-        msgCh:          make(chan amqp.Delivery, 128),
-        tempCh:         make(chan string, 128),
-    }
+	return &Server{
+		rabbitMQ:       rmq,
+		eventsNotifier: notifier,
+		eventsConsumer: consumer,
+		quitCh:         make(chan struct{}),
+		msgCh:          make(chan amqp.Delivery, 128),
+		tempCh:         make(chan string, 128),
+	}
 }
-
 
 func (s *Server) Start() {
 	fmt.Println("Server starting...")
@@ -82,23 +82,92 @@ func (s *Server) quit() {
 	s.quitCh <- struct{}{}
 }
 
-func main() {
-    rmq := queue.NewRabbitMQ("guest", "guest", "localhost", "5672", "amqp", "services-events", "direct")
-    if err := rmq.Connect(); err != nil {
-        log.Fatalf("Error connecting to RabbitMQ: %v", err)
-    }
-    if err := rmq.SetupExchange(); err != nil {
-        log.Fatalf("Error setting up exchange: %v", err)
-    }
-
-    notifier := queue.NewRabbitMQNotifier(rmq.Channel, rmq.ExchangeName)
-    consumer := queue.NewRabbitMQConsumer(rmq.Channel, "service-feedback", "playground-consumer", "services-events", "services.events", false, nil)
-
-    server := NewServer(rmq, notifier, consumer)
-	// go func() {
-	// 	time.Sleep(20 * time.Second)
-	// 	server.quit()
-	// }()
-    server.Start()
+type SubcontextDTO struct {
+	Name     string `json:"name"`
+	Priority int    `json:"priority"`
 }
 
+type FileDTO struct {
+	Name string `json:"name"`
+}
+
+type ModelOrderDTO struct {
+	Costumer    string          `json:"costumer"`
+	Context     string          `json:"context"`
+	Subcontexts []SubcontextDTO `json:"subcontexts"`
+	BucketName  string          `json:"bucket_name"`
+	Files       []FileDTO       `json:"files"`
+	Partition   string          `json:"partition"`
+}
+
+var (
+	consumerName             = "event-listener"
+	exchangeName             = "services-events"
+	exchangeType             = "direct"
+	queueName                = "service-feedback"
+	routingKey               = "services.events"
+	modelOrderCollectionName = "model-orders"
+	rabbitmqUser             = "guest"
+	rabbitmqPassword         = "guest"
+	rabbitmqHost             = "localhost"
+	rabbitmqPort             = "5672"
+	rabbitmqProtocol         = "amqp"
+	modelOrderDTO            = ModelOrderDTO{
+		Costumer: "costumer",
+		Context:  "context",
+		Subcontexts: []SubcontextDTO{
+			{
+				Name:     "subcontext",
+				Priority: 1,
+			},
+			{
+				Name:     "subcontext2",
+				Priority: 2,
+			},
+		},
+		BucketName: "bucket_name",
+		Files: []FileDTO{
+			{
+				Name: "file",
+			},
+			{
+				Name: "file2",
+			},
+		},
+		Partition: "partition",
+	}
+)
+
+func main() {
+	rmq := queue.NewRabbitMQ(
+		rabbitmqUser,
+		rabbitmqPassword,
+		rabbitmqHost,
+		rabbitmqPort,
+		rabbitmqProtocol,
+		exchangeName,
+		exchangeType,
+	)
+	if err := rmq.Connect(); err != nil {
+		log.Fatalf("Error connecting to RabbitMQ: %v", err)
+	}
+	if err := rmq.SetupExchange(); err != nil {
+		log.Fatalf("Error setting up exchange: %v", err)
+	}
+
+	notifier := queue.NewRabbitMQNotifier(rmq.Channel, rmq.ExchangeName)
+	// consumer := queue.NewRabbitMQConsumer(rmq.Channel, "service-feedback", "playground-consumer", "services-events", "services.events", false, nil)
+
+	// server := NewServer(rmq, notifier, consumer)
+	// // go func() {
+	// // 	time.Sleep(20 * time.Second)
+	// // 	server.quit()
+	// // }()
+	// server.Start()
+
+	data, err := json.Marshal(modelOrderDTO)
+	if err != nil {
+		log.Fatalf("Error marshaling modelOrderDTO: %v", err)
+	}
+	notifier.Notify(data, routingKey)
+}

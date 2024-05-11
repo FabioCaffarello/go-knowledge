@@ -37,26 +37,12 @@ func (al *AmqpConsumer) GetListenerTag() string {
 func (al *AmqpConsumer) Consume() {
 	messageChannel := make(chan amqp.Delivery)
 	go al.rabbitMQConsumer.Consume(messageChannel)
-	// mainloop:
-	// for {
-	//     select {
-	//         case msg, ok := <-messageChannel:
-	//             if !ok {
-	//                 log.Println("Stopping consumer...")
-	//                 break mainloop
-	//             }
-	//             al.msgCh <- msg.Body
-	//     }
-	// }
 	for msg := range messageChannel {
 		al.msgCh <- msg.Body
+        msg.Ack(false)
 	}
 }
 
 func (al *AmqpConsumer) GetMsgCh() <-chan []byte {
 	return al.msgCh
 }
-
-// func (al *AmqpConsumer) Stop() {
-
-// }

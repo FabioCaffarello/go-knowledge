@@ -73,7 +73,6 @@ func (c *ListenerController) StartListener(listenerTag string) error {
 	go func(listener *Listener) {
 		listener.consumer.Consume()
 		listener.UsecaseImpl.ProcessMessageChannel(listener.consumer.GetMsgCh(), listenerTag)
-		// Need to handle the error
 	}(listener)
 	return nil
 }
