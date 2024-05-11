@@ -7,12 +7,12 @@ import (
 
 func mapToModelOrder(document map[string]interface{}, documentEntity *entity.ModelOrder) error {
 	documentBytes, err := json.Marshal(document)
-    if err != nil {
-        return err
-    }
-    err = json.Unmarshal(documentBytes, &documentEntity)
-    if err != nil {
-        return err
-    }
-    return nil
+	if err != nil {
+		return err
+	}
+	err = json.Unmarshal(documentBytes, &documentEntity)
+	if err != nil {
+		return err
+	}
+	return nil
 }

@@ -67,10 +67,10 @@ func (r *ModelOrderRepository) FindByID(id string) (*entity.ModelOrder, error) {
 }
 
 func (r *ModelOrderRepository) DeleteByID(id string) error {
-    log.Printf("Delete model order by ID in memory")
-    err := r.client.DeleteOne(r.collectionName, id)
-    if err != nil {
-        return err
-    }
-    return nil
+	log.Printf("Delete model order by ID in memory")
+	err := r.client.DeleteOne(r.collectionName, id)
+	if err != nil {
+		return err
+	}
+	return nil
 }
