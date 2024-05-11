@@ -1,0 +1,11 @@
+go 1.22
+
+use (
+	./libs/golang/resources/database/in-memory/go-doc-db
+	./libs/golang/resources/database/in-memory/go-doc-db-client
+	./libs/golang/resources/go-rabbitmq
+	./libs/golang/services/shared/go-events
+	./libs/golang/shared/id/go-md5
+	./playground
+	./services/eda/model-order-listener
+)

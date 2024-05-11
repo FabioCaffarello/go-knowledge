@@ -1,0 +1,47 @@
+{
+  "name": "go-knowledge-services-eda-model-order-listener",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "application",
+  "sourceRoot": "services/eda/model-order-listener",
+  "tags": [
+    "lang:golang",
+    "scope:service"
+  ],
+  "targets": {
+    "build": {
+      "executor": "@nx-go/nx-go:build",
+      "options": {
+        "main": "{projectRoot}/cmd/main.go"
+      }
+    },
+    "serve": {
+      "executor": "@nx-go/nx-go:serve",
+      "options": {
+        "main": "{projectRoot}/cmd/main.go"
+      }
+    },
+    "test": {
+      "executor": "@nx-go/nx-go:test"
+    },
+    "lint": {
+      "executor": "@nx-go/nx-go:lint"
+    },
+    "go-tidy": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "go mod tidy",
+        "cwd": "{projectRoot}"
+      }
+    },
+    "go-run": {
+      "executor": "nx:run-commands",
+      "dependsOn": [
+        "go-tidy"
+      ],
+      "options": {
+        "command": "go run cmd/main.go",
+        "cwd": "{projectRoot}"
+      }
+    }
+  }
+}
