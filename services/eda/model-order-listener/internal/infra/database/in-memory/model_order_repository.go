@@ -29,6 +29,7 @@ func NewModelOrderRepository(
 func (r *ModelOrderRepository) Create(modelOrder *entity.ModelOrder) error {
 	log.Printf("Save model order in memory")
 	modelOrderMap := modelOrder.ToMap()
+	modelOrderMap["_id"] = string(modelOrder.ID)
 	err := r.client.InsertOne(r.collectionName, modelOrderMap)
 	if err != nil {
 		return err

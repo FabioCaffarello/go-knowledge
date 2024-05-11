@@ -27,6 +27,8 @@ func (h *FileOrderCreatedHandler) Handle(event events.EventInterface, wg *sync.W
 		if err != nil {
 			log.Printf("FileOrder marshalling: %v", err)
 		}
+		log.Printf("FileOrder created: %s", string(jsonOutput))
+		log.Printf("FileOrder created: %s", event.GetTag())
 		err = h.Notifier.Notify(jsonOutput, event.GetTag())
 		if err != nil {
 			log.Printf("FileOrder notifying: %v", err)
