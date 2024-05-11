@@ -73,7 +73,7 @@ func (c *ListenerController) StartListener(listenerTag string) error {
 		return errors.New("Listener not found")
 	}
 	go func(listener *Listener) {
-		listener.consumer.Consume()
+		go listener.consumer.Consume()
 		listener.UsecaseImpl.ProcessMessageChannel(listener.consumer.GetMsgCh(), listenerTag)
 	}(listener)
 	return nil

@@ -21,7 +21,7 @@ func NewListenerServer(
 
 func (es *ListenerServer) Start() {
 	for listenerTag, _ := range es.controller.GetListeners() {
-		es.controller.StartListener(listenerTag)
+		go es.controller.StartListener(listenerTag)
 	}
 mainloop:
 	for {

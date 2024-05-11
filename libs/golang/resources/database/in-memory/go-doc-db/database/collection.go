@@ -2,9 +2,11 @@ package database
 
 import (
 	"errors"
+	"log"
 	"sync"
 )
 
+type DocumentID string
 type Document map[string]interface{}
 type Collection struct {
 	data map[string]Document
@@ -20,10 +22,11 @@ func NewCollection() *Collection {
 func (c *Collection) InsertOne(
 	document Document,
 ) error {
-    c.mu.Lock() // Lock for writing
+	c.mu.Lock() // Lock for writing
 	defer c.mu.Unlock()
 
 	documentID, ok := document["_id"]
+	log.Printf("type of documentID: %T", documentID)
 	if !ok {
 		return errors.New("_id field is required")
 	}
@@ -38,7 +41,7 @@ func (c *Collection) InsertOne(
 func (c *Collection) FindOne(
 	id string,
 ) (Document, error) {
-    c.mu.RLock() // Lock for reading
+	c.mu.RLock() // Lock for reading
 	defer c.mu.RUnlock()
 
 	document, ok := c.data[id]
@@ -49,7 +52,7 @@ func (c *Collection) FindOne(
 }
 
 func (c *Collection) FindAll() []Document {
-    c.mu.RLock() // Lock for reading
+	c.mu.RLock() // Lock for reading
 	defer c.mu.RUnlock()
 	documents := make([]Document, 0, len(c.data))
 	for _, document := range c.data {
@@ -84,7 +87,7 @@ func matchesQuery(document, query map[string]interface{}) bool {
 
 // Find searches documents matching a given query.
 func (c *Collection) Find(query map[string]interface{}) []Document {
-    c.mu.RLock() // Lock for reading
+	c.mu.RLock() // Lock for reading
 	defer c.mu.RUnlock()
 	documents := make([]Document, 0, len(c.data))
 	for _, document := range c.data {
@@ -98,8 +101,8 @@ func (c *Collection) Find(query map[string]interface{}) []Document {
 func (c *Collection) DeleteOne(
 	id string,
 ) error {
-    c.mu.Lock() // Lock for writing
-    defer c.mu.Unlock()
+	c.mu.Lock() // Lock for writing
+	defer c.mu.Unlock()
 	_, ok := c.data[id]
 	if !ok {
 		return errors.New("document not found")
@@ -112,8 +115,8 @@ func (c *Collection) UpdateOne(
 	id string,
 	update Document,
 ) error {
-    c.mu.Lock() // Lock for writing
-    defer c.mu.Unlock()
+	c.mu.Lock() // Lock for writing
+	defer c.mu.Unlock()
 	_, ok := c.data[id]
 	if !ok {
 		return errors.New("document not found")
@@ -125,8 +128,8 @@ func (c *Collection) UpdateOne(
 }
 
 func (c *Collection) DeleteAll() error {
-    c.mu.Lock() // Lock for writing
-    defer c.mu.Unlock()
+	c.mu.Lock() // Lock for writing
+	defer c.mu.Unlock()
 	c.data = make(map[string]Document)
 	return nil
 }

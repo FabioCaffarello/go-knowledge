@@ -3,6 +3,7 @@ package amqpconsumer
 import (
 	"fmt"
 	"go-knowledge/libs/golang/resources/go-rabbitmq/queue"
+	"log"
 
 	amqp "github.com/rabbitmq/amqp091-go"
 )
@@ -11,6 +12,7 @@ type AmqpConsumer struct {
 	rabbitMQ         *queue.RabbitMQ
 	rabbitMQConsumer *queue.RabbitMQConsumer
 	msgCh            chan []byte
+	quitCh           chan struct{}
 }
 
 func NewAmqpConsumer(rmq *queue.RabbitMQ, queueName, consumerName, routingKey string) *AmqpConsumer {
@@ -27,6 +29,7 @@ func NewAmqpConsumer(rmq *queue.RabbitMQ, queueName, consumerName, routingKey st
 		rabbitMQ:         rmq,
 		rabbitMQConsumer: consumer,
 		msgCh:            make(chan []byte),
+		quitCh:           make(chan struct{}),
 	}
 }
 
@@ -37,9 +40,16 @@ func (al *AmqpConsumer) GetListenerTag() string {
 func (al *AmqpConsumer) Consume() {
 	messageChannel := make(chan amqp.Delivery)
 	go al.rabbitMQConsumer.Consume(messageChannel)
-	for msg := range messageChannel {
-		al.msgCh <- msg.Body
-        msg.Ack(false)
+mainloop:
+	for {
+		select {
+		case msg := <-messageChannel:
+				log.Printf("Received message: %s", string(msg.Body))
+				msg.Ack(false)
+				al.msgCh <- msg.Body
+		case <-al.quitCh:
+			break mainloop
+		}
 	}
 }
 

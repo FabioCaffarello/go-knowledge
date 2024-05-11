@@ -37,6 +37,7 @@ func (u *CreateModelOrderUseCase) ProcessMessageChannel(msgCh <-chan []byte, lis
 	for msg := range msgCh {
 		var msgDTO inputDTO.ModelOrderDTO
 		err := json.Unmarshal(msg, &msgDTO)
+		log.Printf("[usecase] Message received: %s", string(msg))
 		if err != nil {
 			log.Printf("Error unmarshalling message: %v", err)
 			errMsg := outputDTO.ErrMsgDTO{
@@ -96,7 +97,7 @@ func (u *CreateModelOrderUseCase) execute(msg inputDTO.ModelOrderDTO) error {
             fileOrder,
         )
     }
-    u.FileOrderCreated.SetTag(fmt.Sprintf("file-order-created:%s:%s", modelOrder.Costumer, modelOrder.ModelID))
+    u.FileOrderCreated.SetTag(fmt.Sprintf("file-order-created:%s:%s", modelOrder.Costumer, string(modelOrder.ModelID)))
     u.EventDispatcher.Dispatch(u.FileOrderCreated)
     u.modelOrderRepository.DeleteByID(string(modelOrder.ID))
 	return nil
